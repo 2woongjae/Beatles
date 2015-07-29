@@ -9,9 +9,6 @@
   ],
   "license": "MIT",
   "ignore": [
-    "**/.*",
-    "node_modules",
-    "bower_components"
   ],
   "dependencies": {
     "jquery": "~2.1.4",
