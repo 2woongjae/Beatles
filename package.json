@@ -1,0 +1,10 @@
+{
+  "name":"Beatles Demo",
+  "version":"1.0.0",
+  "main":"default.html",
+  "window":{
+    "width": 1920,
+    "height": 1080,
+    "toolbar":false
+  }
+}
