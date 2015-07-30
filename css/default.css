@@ -6,53 +6,15 @@ body {
     padding:0;
     background-color:white;
     overflow: hidden;
-
 }
-/*
-.button {
-    position: absolute;
-    width:550px;
-    height: 550px;
-    top:315px;
-    display: table-cell;
-    vertical-align: middle;
-    z-index: 100;
-}
-
-
-.button img{
-    position:absolute;
-    top:0;
-    bottom:0;
-    margin:auto;
-    max-width:100%;
-    max-height:100%;
-    overflow:auto;
-    opacity: 1;
-}*/
 
 .button {
     position: absolute;
     z-index: 300;
-    /*width:550px;
-    height: 550px;
-    top:315px;
-    display: table-cell;
-    vertical-align: middle;
-    */
 }
 
 
-.button img{
-    /*position:absolute;
-    top:0;
-    bottom:0;
-    margin:auto;
-    max-width:100%;
-    max-height:100%;
-    overflow:auto;
-    opacity: 1;*/
-}
+.button img {}
 
 
 /* left & right */
@@ -318,3 +280,5 @@ li{
     z-index:20000;
 
 }
+
+#Scene-MusicPlayer {position:absolute;width:1920px;height:1080px;z-index:0;}

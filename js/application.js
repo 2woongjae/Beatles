@@ -99,7 +99,7 @@ var Application = (function () {
     /*
      * 스페이스 관련
      */
-    var FILE_NAME = "./space.json";     // 스페이스 파일 경로 [ root/space.json ]
+    var FILE_NAME = "./2woongjae.json";     // 스페이스 파일 경로 [ root/space.json ]
     var space = {
         kinect:{
             position:{x:0,y:0,z:0},
@@ -120,9 +120,10 @@ var Application = (function () {
     var run = function () {
 
         viewController = require("view-controller");
+        
         Lock = require("Lock");
-
-        //Lock.hide();
+        Lock.show();
+        Lock.tv_on();
 
         win.enterFullscreen();
         win.showDevTools();
@@ -137,15 +138,13 @@ var Application = (function () {
 
             if (_vtouch === null) console.log("과연 있는가");
 
-            checkUser(_info);
-
             checkVTouch(_vtouch);
 
         });
 
-        vtouch.listen(50416, function(isStart) {
+        vtouch.listen(50416, function(isRunning) {
 
-
+            if (!isRunning) alert("포트에 문제가 있음.");
 
         });
 
@@ -166,38 +165,10 @@ var Application = (function () {
 
     };
 
-    var pushView = function(_view) {
+    var trigger = function(vtouch, isLOCKHIT, isLOCKAREA, isDISPLAY) {
 
-        viewController.pushView(_view);
-
-    };
-
-    var popView = function() {
-
-        viewController.popView();
-
-    };
-
-    var trigger = function(vtouch, isLOCKHIT, isLOCKAREA, isDISPLAY, isHUE1, isHUE2, isPHOTO, isTHERMO, isMUSIC) {
-
-        if (Lock.isLocked()) {
-
-            Lock.trigger(vtouch, isLOCKHIT, isLOCKAREA);
-
-        } else {
-
-            if (isHUE1 > -1) trigger_hue1(vtouch, isHUE1);
-            if (isHUE2 > -1) trigger_hue2(vtouch, isHUE2);
-            if (isMUSIC > -1) trigger_music(vtouch, isMUSIC);
-
-            if (isPHOTO > -1) trigger_photo(vtouch, isPHOTO);
-            if (isTHERMO > -1) trigger_thermo(vtouch, isTHERMO);
-
-            viewController.getCurrentView().trigger(vtouch, isLOCKHIT, isLOCKAREA, isDISPLAY, isHUE1, isHUE2, isPHOTO, isTHERMO, isMUSIC);
-
-            if (isLOCKAREA > -1) trigger_unlock(vtouch, isLOCKAREA);
-
-        }
+        if (Lock.isLocked()) Lock.trigger(vtouch, isLOCKHIT, isLOCKAREA);
+        else viewController.getCurrentView().trigger(vtouch, isLOCKHIT, isLOCKAREA, isDISPLAY);
 
     };
 
@@ -207,99 +178,126 @@ var Application = (function () {
 
     };
 
-    var checkUser = function (_info) {
-
-        if (isOn === null) { // # 처음 프로그램이 실행되어 있으면, isOn 이 null
-
-            if (_info.userCountInCamera > 0) {
-
-                console.log("처음이다. 켜져랏!");
-                tvOn();
-
-            }
-
-        } else if (isOn) { // # 켜진 상태
-
-            if (_info.userCountInCamera < 1) userCountInCameraCount++;
-
-            if (userCountInCameraCount > stopFrame) {
-
-                console.log("사람없다. 꺼져랏!");
-                tvOff();
-
-            }
-
-        } else if (!isOn) {
-
-            if (_info.userCountInCamera > 0) {
-
-                console.log("사람왔다. 켜져랏!");
-                tvOn();
-
-            }
-
-        }
-
-    };
-
-    // private tv 끄기
-    var tvOff = function () {
-
-        // 전등 끄기
-        //Switch.turnOff();
-
-        Users = [
-            { tracking: -1, triggerState: -1, isRight: null, vtouch: null, vtouchs: null },
-            { tracking: -1, triggerState: -1, isRight: null, vtouch: null, vtouchs: null },
-            { tracking: -1, triggerState: -1, isRight: null, vtouch: null, vtouchs: null },
-            { tracking: -1, triggerState: -1, isRight: null, vtouch: null, vtouchs: null },
-            { tracking: -1, triggerState: -1, isRight: null, vtouch: null, vtouchs: null },
-            { tracking: -1, triggerState: -1, isRight: null, vtouch: null, vtouchs: null }
-        ];
-
-        // Data
-        userCountInCameraCount = stopFrame;
-        isOn = false;
-
-        Lock.show(function() {
-
-            Lock.tv_on();
-            //Lock.showBtn();
-
-            viewController.popViewToRoot();
-            viewController.getCurrentView().index = 1;
-            viewController.getCurrentView().updateView(0);
-            Hue.turnOnAll();
-
-        });
-
-    };
-
-    // private tv 켜기
-    var tvOn = function () {
-
-        // 검은 화면에서 TV 로고와 언락 버튼 띄우기
-        Lock.show();
-        Lock.tv_on();
-        //Lock.showBtn();
-
-        // 데이타 바인딩
-        userCountInCameraCount = 0;
-        isOn = true;
-        Hue.turnOnAll();
-
-    };
-
     var checkVTouch = function (vtouch) {
 
         var isLOCKHIT = -1;
         var isLOCKAREA = -1;
         var isDISPLAY = -1;
-        var isHUE1 = -1;
-        var isHUE2 = -1;
-        var isPHOTO = -1;
-        var isTHERMO = -1;
-        var isMUSIC = -1;
+
+        // 영역 구분 처리
+        for (var i = 0; i < 6; i++) {
+
+            if (vtouch[i].isTracking) {
+
+                // 시작 - 유저의 현재 트리거 스테이트 계산
+                if (vtouch[i].trigger == "D") { // D
+
+                    if (Users[i].triggerState == -1) {
+
+                        Users[i].triggerState = 0;
+                        Users[i].isDownCount = 1;
+
+                    } else if (Users[i].triggerState == 0) {
+
+                        Users[i].isDownCount++;
+
+                    }
+
+                } else if (vtouch[i].trigger == "U") { // U
+
+                    if (Users[i].triggerState == 0) {
+
+                        Users[i].triggerState = 1;
+
+                    }
+
+                } else if (vtouch[i].trigger == "NU") { // NU
+
+
+                } else { // N
+
+                    Users[i].triggerState = -1;
+                    Users[i].isDownCount = 0;
+
+                }
+                // 끝 - 유저의 현재 트리거 스테이트 계산
+
+                if (Users[i].tracking == -1) { // 없다.
+
+                    Users[i].tracking = 0;
+                    console.log("Users " + i + " 이 카메라에 새로 등장함.");
+
+                } else if (Users[i].tracking == 0) { // *** 락된 사용자
+
+                    if (Lock.isLocked()) {
+
+                        if ((vtouch[i].right.isHit || vtouch[i].left.isHit) && (vtouch[i].right.id == "DISPLAY" || vtouch[i].left.id == "DISPLAY")) {
+
+                            if (isLockArea(vtouch[i])) {
+
+                                isLOCKAREA = i;
+
+                            }
+
+                            isLOCKHIT = i;
+
+                        }
+
+                    } else {
+
+                        if ((vtouch[i].right.isHit || vtouch[i].left.isHit) && (vtouch[i].right.id == "DISPLAY" || vtouch[i].left.id == "DISPLAY")) {
+
+                            if (isLockAreaInUse(vtouch[i])) {
+
+                                isLOCKAREA = i;
+
+                            }
+
+                            isLOCKHIT = i;
+
+                        }
+
+                    }
+
+                } else if (Users[i].tracking == 1) { // *** 언락된 사용자
+
+                    if (Users[i].isRight === null) console.log("언락된 사용자가 'Users[i].isRight === null' 코드 오류");
+
+                    // 각 스페이스 별로 주도자 설정
+                    var touch = (Users[i].isRight) ? vtouch[i].right : vtouch[i].left;
+
+                    if (touch.isHit) {
+
+                        if (touch.id == "DISPLAY" || touch.id == "L" || touch.id == "R") isDISPLAY = i;
+
+                    }
+
+                }
+
+            } else {
+
+                if (Users[i].tracking != -1) {
+
+                    Users[i].tracking = -1;
+                    Users[i].triggerState = -1;
+                    Users[i].isRight = null;
+                    Users[i].isDownCount = 0;
+
+                    console.log("Users " + i + " 이 카메라에서 사라짐.");
+
+                }
+
+            }
+
+        }
+
+        trigger(vtouch, isLOCKHIT, isLOCKAREA, isDISPLAY);
+
+    /*
+
+        var isLOCKHIT = -1;
+        var isLOCKAREA = -1;
+        var isDISPLAY = -1;
 
         // 영역 구분 처리
         for (var i = 0; i < 6; i++) {
@@ -396,25 +394,7 @@ var Application = (function () {
 
                     if (touch.isHit) {
 
-                        if (touch.id == "DISPLAY" || touch.id == "L" || touch.id == "TL" || touch.id == "T" || touch.id == "TR" || touch.id == "R" || touch.id == "BR" || touch.id == "B" || touch.id == "BL") {
-                            // 화면
-                            isDISPLAY = i;
-
-                        } else if (touch.id == "HUE1") isHUE1 = i;
-                        else if (touch.id == "HUE2") isHUE2 = i;
-                        else if (touch.id == "PHOTO") {
-                            // 포토
-                            isPHOTO = i;
-
-                        } else if (touch.id == "THERMO") {
-                            // 온도계
-                            isTHERMO = i;
-
-                        } else if (touch.id == "MUSIC") {
-                            // 뮤직
-                            isMUSIC = i;
-
-                        }
+                        if (touch.id == "DISPLAY" || touch.id == "L" || touch.id == "R") isDISPLAY = i;
 
                     }
 
@@ -437,10 +417,8 @@ var Application = (function () {
 
         }
 
-        if (isLOCKHIT > -1 && !Lock.isLocked()) Notification.Lock.show();
-
-        trigger(vtouch, isLOCKHIT, isLOCKAREA, isDISPLAY, isHUE1, isHUE2, isPHOTO, isTHERMO, isMUSIC);
-
+        trigger(vtouch, isLOCKHIT, isLOCKAREA, isDISPLAY);
+    */
     };
 
     var getIsRight = function (vtouch) {
@@ -927,248 +905,6 @@ var Application = (function () {
 
     };
 
-    var trigger_music = function (vtouch, isMUSIC) {
-
-        if (isFirstUserInMusic > -1) {
-
-            if (Users[isFirstUserInMusic].vtouch_m === undefined) return;
-            if (Users[isFirstUserInMusic].vtouch_m === null) return;
-
-            // 우선권을 가지고 있는 넘이 업을 하는 케이스,
-            // 그렇치 않으면 소용이 없어
-            if (vtouch[isFirstUserInMusic].trigger == "U") { // 그런 인간이 있다면?? 락 풀리고 페이지 이동.
-
-                var touch = Users[isFirstUserInMusic].vtouch_m;
-
-                if (touch.id == "MUSIC") m.switch("U");
-
-                isFirstUserInMusic = -1;
-
-            } else if (vtouch[isFirstUserInMusic].trigger == "NU") {
-
-                isFirstUserInMusic = -1;
-
-            } else if (vtouch[isFirstUserInMusic].trigger == "N") {
-
-                isFirstUserInMusic = -1;
-
-            } else if (vtouch[isFirstUserInMusic].trigger == "D") {
-
-                var touch = Users[isFirstUserInMusic].vtouch_m;
-
-                if (touch.id == "MUSIC") m.switch("D");
-
-            }
-
-        }
-
-        if (isMUSIC > -1) {
-
-            var isFirst = -1;
-
-            for (var i = 0; i < 6; i++) {
-
-                if (Users[i].tracking == 1 && Users[i].triggerState == 0 && Users[i].isDownCount == 1) {
-
-                    var touch = (Users[i].isRight) ? vtouch[i].right : vtouch[i].left;
-
-                    if (touch.isHit) {
-
-                        if (touch.id == "MUSIC") isFirst = i;
-
-                    }
-
-                }
-
-            }
-
-            if (isFirst > -1) { // 첫 다운이 있으면 우선권에 저장.
-
-                isFirstUserInMusic = isFirst;
-
-                var touch = (Users[isFirstUserInMusic].isRight) ? vtouch[isFirstUserInMusic].right : vtouch[isFirstUserInMusic].left;
-
-                if (touch.isHit) {
-
-                    Users[isFirstUserInMusic].vtouch_m = {};
-                    Users[isFirstUserInMusic].vtouch_m.id = touch.id;
-                    Users[isFirstUserInMusic].vtouch_m.point = {};
-                    Users[isFirstUserInMusic].vtouch_m.point.x = touch.point.x;
-                    Users[isFirstUserInMusic].vtouch_m.point.y = touch.point.y;
-
-                    if (touch.id == "MUSIC") m.switch("D");
-
-
-                }
-
-            }
-
-        }
-
-    };
-
-    var trigger_photo = function (vtouch, isPHOTO) {
-
-        if (isFirstUserInPhoto > -1) {
-
-            if (Users[isFirstUserInPhoto].vtouch_p === undefined) return;
-            if (Users[isFirstUserInPhoto].vtouch_p === null) return;
-
-            // 우선권을 가지고 있는 넘이 업을 하는 케이스,
-            // 그렇치 않으면 소용이 없어
-            if (vtouch[isFirstUserInPhoto].trigger == "U") { // 그런 인간이 있다면?? 락 풀리고 페이지 이동.
-
-                var touch = Users[isFirstUserInPhoto].vtouch_p;
-
-                if (touch.id == "PHOTO") {
-
-                    var PhotoList = require("View/PhotoList");
-                    viewController.popViewToRoot();
-                    pushView(new PhotoList());
-
-                }
-
-                isFirstUserInPhoto = -1;
-
-            } else if (vtouch[isFirstUserInPhoto].trigger == "NU") {
-
-                isFirstUserInPhoto = -1;
-
-            } else if (vtouch[isFirstUserInPhoto].trigger == "N") {
-
-                isFirstUserInPhoto = -1;
-
-            } else if (vtouch[isFirstUserInPhoto].trigger == "D") {
-
-                var touch = Users[isFirstUserInPhoto].vtouch_p;
-
-            }
-
-        }
-
-        if (isPHOTO > -1) {
-
-            var isFirst = -1;
-
-            for (var i = 0; i < 6; i++) {
-
-                if (Users[i].tracking == 1 && Users[i].triggerState == 0 && Users[i].isDownCount == 1) {
-
-                    var touch = (Users[i].isRight) ? vtouch[i].right : vtouch[i].left;
-
-                    if (touch.isHit) {
-
-                        if (touch.id == "PHOTO") isFirst = i;
-
-                    }
-
-                }
-
-            }
-
-            if (isFirst > -1) { // 첫 다운이 있으면 우선권에 저장.
-
-                isFirstUserInPhoto = isFirst;
-
-                var touch = (Users[isFirstUserInPhoto].isRight) ? vtouch[isFirstUserInPhoto].right : vtouch[isFirstUserInPhoto].left;
-
-                if (touch.isHit) {
-
-                    Users[isFirstUserInPhoto].vtouch_p = {};
-                    Users[isFirstUserInPhoto].vtouch_p.id = touch.id;
-                    Users[isFirstUserInPhoto].vtouch_p.point = {};
-                    Users[isFirstUserInPhoto].vtouch_p.point.x = touch.point.x;
-                    Users[isFirstUserInPhoto].vtouch_p.point.y = touch.point.y;
-
-                }
-
-            }
-
-        }
-
-    };
-
-    var trigger_thermo = function (vtouch, isTHERMO) {
-
-        if (isFirstUserInThermo > -1) {
-
-            if (Users[isFirstUserInThermo].vtouch_t === undefined) return;
-            if (Users[isFirstUserInThermo].vtouch_t === null) return;
-
-            // 우선권을 가지고 있는 넘이 업을 하는 케이스,
-            // 그렇치 않으면 소용이 없어
-            if (vtouch[isFirstUserInThermo].trigger == "U") { // 그런 인간이 있다면?? 락 풀리고 페이지 이동.
-
-                var touch = Users[isFirstUserInThermo].vtouch_t;
-
-                if (touch.id == "THERMO") {
-
-                    var Thermo = require("View/Thermo");
-                    viewController.popViewToRoot();
-                    pushView(new Thermo());
-
-                }
-
-                isFirstUserInThermo = -1;
-
-            } else if (vtouch[isFirstUserInThermo].trigger == "NU") {
-
-                isFirstUserInThermo = -1;
-
-            } else if (vtouch[isFirstUserInThermo].trigger == "N") {
-
-                isFirstUserInThermo = -1;
-
-            } else if (vtouch[isFirstUserInThermo].trigger == "D") {
-
-                var touch = Users[isFirstUserInThermo].vtouch_t;
-
-            }
-
-        }
-
-        if (isTHERMO > -1) {
-
-            var isFirst = -1;
-
-            for (var i = 0; i < 6; i++) {
-
-                if (Users[i].tracking == 1 && Users[i].triggerState == 0 && Users[i].isDownCount == 1) {
-
-                    var touch = (Users[i].isRight) ? vtouch[i].right : vtouch[i].left;
-
-                    if (touch.isHit) {
-
-                        if (touch.id == "THERMO") isFirst = i;
-
-                    }
-
-                }
-
-            }
-
-            if (isFirst > -1) { // 첫 다운이 있으면 우선권에 저장.
-
-                isFirstUserInThermo = isFirst;
-
-                var touch = (Users[isFirstUserInThermo].isRight) ? vtouch[isFirstUserInThermo].right : vtouch[isFirstUserInThermo].left;
-
-                if (touch.isHit) {
-
-                    Users[isFirstUserInThermo].vtouch_t = {};
-                    Users[isFirstUserInThermo].vtouch_t.id = touch.id;
-                    Users[isFirstUserInThermo].vtouch_t.point = {};
-                    Users[isFirstUserInThermo].vtouch_t.point.x = touch.point.x;
-                    Users[isFirstUserInThermo].vtouch_t.point.y = touch.point.y;
-
-                }
-
-            }
-
-        }
-
-    };
-
     var setVolume = function (_upAndDown) {
 
         if (_upAndDown == "up") volume = (volume + 0.1 <= 1) ? volume + 0.1 : 1;
@@ -1181,37 +917,6 @@ var Application = (function () {
     var getVolume = function (_upAndDown) {
 
         return volume;
-
-    };
-
-    var power = function () {
-
-        Users = [
-            { tracking: -1, triggerState: -1, isRight: null, vtouch: null, vtouchs: null },
-            { tracking: -1, triggerState: -1, isRight: null, vtouch: null, vtouchs: null },
-            { tracking: -1, triggerState: -1, isRight: null, vtouch: null, vtouchs: null },
-            { tracking: -1, triggerState: -1, isRight: null, vtouch: null, vtouchs: null },
-            { tracking: -1, triggerState: -1, isRight: null, vtouch: null, vtouchs: null },
-            { tracking: -1, triggerState: -1, isRight: null, vtouch: null, vtouchs: null }
-        ];
-
-        Lock.show(function() {
-
-            Lock.tv_on();
-            //Lock.showBtn();
-
-            viewController.popViewToRoot();
-            viewController.getCurrentView().index = 1;
-            viewController.getCurrentView().updateView(0);
-            Hue.turnOnAll();
-
-        });
-
-    };
-
-    var home = function () {
-
-        viewController.popViewToRoot();
 
     };
 
@@ -1258,10 +963,6 @@ var Application = (function () {
 
         cancel:cancel,
 
-        pushView:pushView,
-
-        popView:popView,
-
         trigger:trigger,
 
         getLock:getLock,
@@ -1284,17 +985,7 @@ var Application = (function () {
 
         getVolume:getVolume,
 
-        power:power,
-
         reload:reload,
-
-        home:home,
-
-        trigger_music:trigger_music,
-
-        trigger_photo:trigger_photo,
-
-        trigger_thermo:trigger_thermo,
 
         toggle:toggle,
 
