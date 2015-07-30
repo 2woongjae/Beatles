@@ -29,6 +29,4 @@ $(function() {
 
     Application.run();
 
-    $(".button").animate({boxShadow: '0 0 10px #699, 0 0 10px #969, 0 0 10px #996, 0 0 30px #669'});
-
 });

@@ -1,0 +1,149 @@
+﻿#Scene-Lock {position:absolute;width:1920px;height:1080px;background-color: rgba(0,0,0,1);z-index:10000;}
+
+#Scene-Lock #bg-black {
+
+    position: absolute;
+    width: 1920px;
+    height: 1080px;
+    background-color: rgba(0,0,0,1);
+
+}
+
+#Scene-Lock #bg-img {
+
+    position: absolute;
+    width: 1920px;
+    height: 1080px;
+    background-image:url("../images/Lock/bg_intro.png");
+    display: none;
+
+}
+
+#Scene-Lock #locktext {
+
+    position: absolute;
+    width:500px;
+    height:32px;
+    top: 295px;
+    left: 710px;
+    font-family:'NotoSans-Bold';
+    color: rgba(238, 238, 238 ,1);
+    font-size: 26px;
+    text-align: center;
+
+}
+
+#Scene-Lock #guidepoint {
+
+    position: absolute;
+    width: 36px;
+    height: 8px;
+    top: 343px;
+    left: 947px;
+
+}
+
+#Scene-Lock .guidestep {
+
+    position: relative;
+    width: 6px;
+    height: 6px;
+    background-color: rgba(238, 238, 238, 1);
+    -webkit-text-stroke: 1px rgba(0,0,0,1);
+    border-radius: 6px;
+    float: left;
+    margin-right: 8px;
+
+}
+
+#Scene-Lock #stepone , #Scene-Lock #steptwo{
+
+    transition: opacity 0.4s;
+
+}
+
+#Scene-Lock #unlockpoint{
+
+    position: absolute;
+    left: 870px;
+    top : 450px;
+    width: 180px;
+    height: 180px;
+
+}
+
+#Scene-Lock #bnt_normal {
+
+    position: absolute;
+    left: 0px;
+    top : 0px;
+    width: 100%;
+    height: 100%;
+    background-image:url("../images/Lock/bnt_unlock.png");
+    background-position: 0px, 0px;
+
+}
+
+#Scene-Lock #bnt_hover {
+
+    position: absolute;
+    left: 0px;
+    top : 0px;
+    width: 100%;
+    height: 100%;
+    background-image:url("../images/Lock/btn_unlock_hover.png");
+    background-position: 0px, 0px;
+    display: none;
+
+}
+
+#Scene-Lock #guideArrow {
+
+    position: relative;
+    left: 0px;
+    top : 0px;
+    width: 100%;
+    height: 100%;
+    background-image:url("../images/Lock/guide_detech.png");
+    display: none;
+
+}
+
+#Scene-Lock #finger {
+
+    position: absolute;
+    top: 800px;
+    width: 500px;
+    height: 1000px;
+    left:0;
+    right:0;
+    margin-left:auto;
+    margin-right:auto;
+    transform-origin : 50% 100%;
+    transform : rotateX(20deg);
+    display: none;
+
+}
+
+#Scene-Lock #fingerani {
+
+    position: absolute;
+    top: 0px;
+    width: 430px;
+    height: 900px;
+    left:0;
+    right:0;
+    margin-left:auto;
+    margin-right:auto;
+
+}
+
+#Scene-Lock #lockEffect{
+
+    position:absolute;
+    left : 0px;
+    top : 0px;
+    width:100px;
+    height : 100px;
+
+}
